@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитика Яндекс.Директ - Sequoia Service</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-xl);
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .logo-section h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-section p {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+        }
+
+        .report-date {
+            text-align: right;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 0.75rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .report-date .date {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .report-date .label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.6s ease-out;
+            animation-fill-mode: both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+        .stat-card:nth-child(5) { animation-delay: 0.5s; }
+        .stat-card:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-title {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.blue { background: #dbeafe; }
+        .stat-icon.green { background: #d1fae5; }
+        .stat-icon.yellow { background: #fef3c7; }
+        .stat-icon.red { background: #fee2e2; }
+        .stat-icon.purple { background: #e9d5ff; }
+        .stat-icon.pink { background: #fce7f3; }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive { color: var(--success); }
+        .stat-change.negative { color: var(--danger); }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            animation: fadeIn 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .chart-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .chart-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .table-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .data-table thead {
+            background: var(--gray-50);
+        }
+
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-600);
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+            white-space: nowrap;
+        }
+
+        .data-table th:hover {
+            color: var(--primary);
+        }
+
+        .data-table th.sortable::after {
+            content: ' ↕';
+            opacity: 0.5;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-top: 1px solid var(--gray-100);
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+
+        .data-table tbody tr {
+            transition: all 0.2s;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--gray-50);
+            transform: scale(1.01);
+        }
+
+        .query-text {
+            font-weight: 500;
+            color: var(--gray-900);
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .position-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .position-premium {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .position-organic {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .position-other {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .cpc-value {
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        .cpc-high { color: var(--danger); }
+        .cpc-medium { color: var(--warning); }
+        .cpc-low { color: var(--success); }
+
+        .traffic-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .traffic-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .insights-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .insight-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--primary);
+            animation: fadeIn 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .insight-card.warning { border-left-color: var(--warning); }
+        .insight-card.danger { border-left-color: var(--danger); }
+        .insight-card.success { border-left-color: var(--success); }
+
+        .insight-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .insight-text {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+
+        .insight-list {
+            list-style: none;
+            margin-top: 0.75rem;
+        }
+
+        .insight-list li {
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            display: flex;
+            align-items: start;
+            gap: 0.5rem;
+        }
+
+        .insight-list li::before {
+            content: '→';
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: var(--gray-200);
+        }
+
+        .search-input {
+            padding: 0.625rem 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            width: 300px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .report-date {
+                text-align: center;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.75rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 0.75rem;
+            background: var(--gray-900);
+            color: white;
+            font-size: 0.75rem;
+            border-radius: 0.375rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1>📊 Аналитика Яндекс.Директ</h1>
+                    <p>Sequoia Service — Детальный разбор рекламной кампании</p>
+                </div>
+                <div class="report-date">
+                    <div class="date">10 марта 2026</div>
+                    <div class="label">Дата формирования отчета</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-title">Всего запросов</div>
+                        <div class="stat-value" id="totalQueries">0</div>
+                        <div class="stat-change positive">
+                            <span>↑</span>
+                            <span>Активных кампаний</span>
+                        </div>
+                    </div>
+                    <div class="stat-icon blue">🔍</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-title">Средний CPC</div>
+                        <div class="stat-value" id="avgCPC">0 ₽</div>
+                        <div class="stat-change negative">
+                            <span>↓</span>
+                            <span>Требует оптимизации</span>
+                        </div>
+                    </div>
+                    <div class="stat-icon yellow">💰</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-title">Премиум позиции</div>
+                        <div class="stat-value" id="premiumPositions">0%</div>
+                        <div class="stat-change positive">
+                            <span>↑</span>
+                            <span>Отличный охват</span>
+                        </div>
+                    </div>
+                    <div class="stat-icon green">🏆</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-title">Средняя частотность</div>
+                        <div class="stat-value" id="avgFrequency">0</div>
+                        <div class="stat-change positive">
+                            <span>→</span>
+                            <span>Базовая</span>
+                        </div>
+                    </div>
+                    <div class="stat-icon purple">📈</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-title">Конкурентов в среднем</div>
+                        <div class="stat-value" id="avgCompetitors">0</div>
+                        <div class="stat-change negative">
+                            <span>↑</span>
+                            <span>Высокая конкуренция</span>
+                        </div>
+                    </div>
+                    <div class="stat-icon red">⚔️</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-title">Трафик с 0% долей</div>
+                        <div class="stat-value" id="zeroTraffic">0</div>
+                        <div class="stat-change negative">
+                            <span>!</span>
+                            <span>Проблемные запросы</span>
+                        </div>
+                    </div>
+                    <div class="stat-icon pink">⚠️</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="insights-section">
+            <div class="insight-card success">
+                <div class="insight-title">✅ Сильные стороны</div>
+                <ul class="insight-list">
+                    <li>Доминирование в премиум-позициях (CP1)</li>
+                    <li>Грамотная UTM-разметка</li>
+                    <li>Чёткие УТП в объявлениях</li>
+                    <li>Релевантные посадочные страницы</li>
+                </ul>
+            </div>
+
+            <div class="insight-card warning">
+                <div class="insight-title">⚠️ Зоны роста</div>
+                <ul class="insight-list">
+                    <li>Высокий CPC по брендам конкурентов</li>
+                    <li>Много запросов с 0% долей трафика</li>
+                    <li>Широкие запросы без минус-слов</li>
+                    <li>Необходима оптимизация ставок</li>
+                </ul>
+            </div>
+
+            <div class="insight-card danger">
+                <div class="insight-title">🔴 Критические моменты</div>
+                <ul class="insight-list">
+                    <li>Биддинг на бренды конкурентов (риск жалоб)</li>
+                    <li>CPC до 483₽ по некоторым запросам</li>
+                    <li>Низкий CTR на конкурентных запросах</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Распределение CPC по запросам</div>
+                    <div class="chart-subtitle">Топ-10 самых дорогих ключевых слов</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cpcChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Доля трафика по позициям</div>
+                    <div class="chart-subtitle">Распределение показов</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Частотность запросов</div>
+                    <div class="chart-subtitle">Базовая частотность (показов/месяц)</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="frequencyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Уровень конкуренции</div>
+                    <div class="chart-subtitle">Количество конкурентов по запросам</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="competitionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header">
+                <div class="table-title">📋 Детализация по запросам</div>
+                <div class="table-controls">
+                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Поиск по запросу...">
+                    <button class="btn btn-secondary" onclick="exportData()">📥 Экспорт CSV</button>
+                </div>
+            </div>
+
+            <div class="filter-tabs">
+                <button class="tab active" onclick="filterTable('all')">Все запросы</button>
+                <button class="tab" onclick="filterTable('premium')">Премиум (CP1)</button>
+                <button class="tab" onclick="filterTable('highCPC')">Высокий CPC (>100₽)</button>
+                <button class="tab" onclick="filterTable('zeroTraffic')">0% трафика</button>
+                <button class="tab" onclick="filterTable('competitors')">Бренды конкурентов</button>
+            </div>
+
+            <table class="data-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortTable(0)">Запрос ↕</th>
+                        <th class="sortable" onclick="sortTable(1)">Позиция ↕</th>
+                        <th class="sortable" onclick="sortTable(2)">Частотность ↕</th>
+                        <th class="sortable" onclick="sortTable(3)">CPC ↕</th>
+                        <th class="sortable" onclick="sortTable(4)">Доля трафика ↕</th>
+                        <th class="sortable" onclick="sortTable(5)">Конкуренты ↕</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Data from CSV
+        const data = [
+            {query: "ооо вентра", position: "CP1", frequency: 30, cpc: 32.76, traffic: 11.3, competitors: 5},
+            {query: "вентра сервисес си-ай-эс", position: "CP1", frequency: 19, cpc: 40.02, traffic: 9.11, competitors: 4},
+            {query: "аутсорсинг градус", position: "CP1", frequency: 2, cpc: 9.06, traffic: 7.97, competitors: 9},
+            {query: "анкор рекрутинговое агентство", position: "2", frequency: 3, cpc: 15.34, traffic: 6.83, competitors: 5},
+            {query: "грузчики цена за тонну", position: "4", frequency: 4, cpc: 2.82, traffic: 6.07, competitors: 10},
+            {query: "компания вентра", position: "CP1", frequency: 18, cpc: 9.18, traffic: 5.12, competitors: 3},
+            {query: "аутсорсинг услуг", position: "3", frequency: 13, cpc: 21.64, traffic: 4.55, competitors: 9},
+            {query: "топ аутсорсинговых компаний", position: "2", frequency: 4, cpc: 0.06, traffic: 4.55, competitors: 9},
+            {query: "аутсорсинг персонала в москве", position: "2", frequency: 3, cpc: 9.94, traffic: 4.55, competitors: 9},
+            {query: "разнорабочие истра", position: "CP1", frequency: 0, cpc: 5.4, traffic: 4.55, competitors: 10},
+            {query: "кадровое агентство вентра", position: "CP1", frequency: 12, cpc: 28.44, traffic: 4.35, competitors: 5},
+            {query: "предоставление персонала", position: "2", frequency: 12, cpc: 102.4, traffic: 4.14, competitors: 9},
+            {query: "аутсорс компании", position: "CP2", frequency: 30, cpc: 80.04, traffic: 3.9, competitors: 8},
+            {query: "аутсорсинг компании", position: "2", frequency: 18, cpc: 149.16, traffic: 3.8, competitors: 5},
+            {query: "аутсорс компания", position: "1", frequency: 34, cpc: 180.08, traffic: 3.72, competitors: 8},
+            {query: "аутсорсинговые компании", position: "CP1", frequency: 97, cpc: 112.62, traffic: 3.28, competitors: 5},
+            {query: "услуги аутсорсинговые", position: "CP2", frequency: 11, cpc: 75.84, traffic: 2.6, competitors: 6},
+            {query: "аутсорсинговые компании москвы", position: "2", frequency: 13, cpc: 46.1, traffic: 2.28, competitors: 9},
+            {query: "ооо вентра москва", position: "CP1", frequency: 1, cpc: 2.04, traffic: 2.28, competitors: 4},
+            {query: "крупнейшие аутсорсинговые компании россии", position: "CP1", frequency: 1, cpc: 1.26, traffic: 1.52, competitors: 9},
+            {query: "аутсорсинговая компания ваш персонал москва", position: "2", frequency: 7, cpc: 20.26, traffic: 1.14, competitors: 9},
+            {query: "агентство вентра", position: "CP2", frequency: 2, cpc: 15.4, traffic: 0, competitors: 7},
+            {query: "предоставление персонала в аренду", position: "CP3", frequency: 1, cpc: 28.28, traffic: 0, competitors: 10},
+            {query: "аренда персонала", position: "2", frequency: 4, cpc: 95.36, traffic: 0, competitors: 9},
+            {query: "аутсорсинг персонала москва", position: "1", frequency: 10, cpc: 483.6, traffic: 0, competitors: 8},
+            {query: "аутсорсинг рабочего персонала", position: "2", frequency: 25, cpc: 403.66, traffic: 0, competitors: 9},
+            {query: "hr аутсорсинг", position: "2", frequency: 2, cpc: 61.06, traffic: 0, competitors: 10},
+            {query: "комплект аутсорсинговая компания", position: "CP1", frequency: 0, cpc: 0, traffic: 0, competitors: 9},
+            {query: "аутсорсинговая услуга", position: "2", frequency: 11, cpc: 0, traffic: 0, competitors: 12},
+            {query: "чем занимаются стикеровщики", position: "CP1", frequency: 3, cpc: 0, traffic: 0, competitors: 7},
+            {query: "стикеровка на складе", position: "CP1", frequency: 0, cpc: 0, traffic: 0, competitors: 9},
+            {query: "рабочие на аутсорсинг", position: "Д5", frequency: 0, cpc: 0, traffic: 0, competitors: 10},
+            {query: "аутсорсинг агентство", position: "3", frequency: 0, cpc: 0, traffic: 0, competitors: 5},
+            {query: "вентра сервисес", position: "CP1", frequency: 0, cpc: 0, traffic: 0, competitors: 4},
+            {query: "трансрегиональная аутсорсинговая компания", position: "CP2", frequency: 0, cpc: 0, traffic: 0, competitors: 8},
+            {query: "вспомогательные рабочие", position: "CP1", frequency: 0, cpc: 0, traffic: 0, competitors: 8},
+            {query: "неквалифицированный персонал", position: "CP2", frequency: 3, cpc: 0.04, traffic: 0, competitors: 8},
+            {query: "предоставление рабочего персонала", position: "3", frequency: 0, cpc: 0, traffic: 0, competitors: 9},
+            {query: "аутсорс аутстаф", position: "3", frequency: 0, cpc: 0, traffic: 0, competitors: 9},
+            {query: "аутсорсинговой компанией", position: "CP1", frequency: 112, cpc: 0, traffic: 0, competitors: 11},
+            {query: "slg компания", position: "CP1", frequency: 1, cpc: 0.04, traffic: 0, competitors: 4},
+            {query: "разнорабочие калуга", position: "CP2", frequency: 0, cpc: 0.04, traffic: 0, competitors: 6},
+            {query: "предоставление труда работников", position: "CP1", frequency: 0, cpc: 0, traffic: 0, competitors: 8},
+            {query: "аутсорсинг персонала московская", position: "2", frequency: 0, cpc: 0, traffic: 0, competitors: 9}
+        ];
+
+        let currentFilter = 'all';
+        let sortColumn = 0;
+        let sortDirection = 'asc';
+
+        // Calculate statistics
+        function calculateStats() {
+            const totalQueries = data.length;
+            const avgCPC = (data.reduce((sum, item) => sum + (item.cpc || 0), 0) / totalQueries).toFixed(2);
+            const premiumCount = data.filter(item => item.position.includes('CP')).length;
+            const premiumPercent = ((premiumCount / totalQueries) * 100).toFixed(1);
+            const avgFrequency = Math.round(data.reduce((sum, item) => sum + (item.frequency || 0), 0) / totalQueries);
+            const avgCompetitors = (data.reduce((sum, item) => sum + item.competitors, 0) / totalQueries).toFixed(1);
+            const zeroTraffic = data.filter(item => item.traffic === 0).length;
+
+            document.getElementById('totalQueries').textContent = totalQueries;
+            document.getElementById('avgCPC').textContent = avgCPC + ' ₽';
+            document.getElementById('premiumPositions').textContent = premiumPercent + '%';
+            document.getElementById('avgFrequency').textContent = avgFrequency;
+            document.getElementById('avgCompetitors').textContent = avgCompetitors;
+            document.getElementById('zeroTraffic').textContent = zeroTraffic;
+        }
+
+        // Initialize charts
+        function initCharts() {
+            // CPC Chart
+            const sortedByCPC = [...data].filter(item => item.cpc > 0).sort((a, b) => b.cpc - a.cpc).slice(0, 10);
+            const cpcCtx = document.getElementById('cpcChart').getContext('2d');
+            new Chart(cpcCtx, {
+                type: 'bar',
+                data: {
+                    labels: sortedByCPC.map(item => item.query.length > 20 ? item.query.substring(0, 20) + '...' : item.query),
+                    datasets: [{
+                        label: 'CPC (₽)',
+                        data: sortedByCPC.map(item => item.cpc),
+                        backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Traffic Distribution
+            const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+            const trafficData = {
+                'Premium (CP1-3)': data.filter(item => item.position.match(/CP\d/)).length,
+                'Organic (1-3)': data.filter(item => item.position.match(/^[1-3]$/)).length,
+                'Other': data.filter(item => !item.position.match(/^(CP\d|[1-3])$/)).length
+            };
+            
+            new Chart(trafficCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(trafficData),
+                    datasets: [{
+                        data: Object.values(trafficData),
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(99, 102, 241, 0.7)',
+                            'rgba(245, 158, 11, 0.7)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 15, usePointStyle: true }
+                        }
+                    }
+                }
+            });
+
+            // Frequency Chart
+            const freqCtx = document.getElementById('frequencyChart').getContext('2d');
+            const sortedByFreq = [...data].sort((a, b) => b.frequency - a.frequency).slice(0, 10);
+            
+            new Chart(freqCtx, {
+                type: 'line',
+                data: {
+                    labels: sortedByFreq.map(item => item.query.length > 15 ? item.query.substring(0, 15) + '...' : item.query),
+                    datasets: [{
+                        label: 'Частотность',
+                        data: sortedByFreq.map(item => item.frequency),
+                        borderColor: 'rgba(236, 72, 153, 1)',
+                        backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Competition Chart
+            const compCtx = document.getElementById('competitionChart').getContext('2d');
+            const competitionLevels = {
+                'Низкая (1-5)': data.filter(item => item.competitors <= 5).length,
+                'Средняя (6-8)': data.filter(item => item.competitors > 5 && item.competitors <= 8).length,
+                'Высокая (9+)': data.filter(item => item.competitors > 8).length
+            };
+
+            new Chart(compCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(competitionLevels),
+                    datasets: [{
+                        data: Object.values(competitionLevels),
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 15, usePointStyle: true }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render table
+        function renderTable(filterData = data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            filterData.forEach((item, index) => {
+                const row = document.createElement('tr');
+                
+                const positionClass = item.position.includes('CP') ? 'position-premium' : 
+                                     item.position.match(/^[1-3]$/) ? 'position-organic' : 'position-other';
+                
+                const cpcClass = item.cpc > 100 ? 'cpc-high' : item.cpc > 10 ? 'cpc-medium' : 'cpc-low';
+                
+                const statusBadge = item.traffic === 0 ? 
+                    '<span style="color: var(--danger); font-size: 0.75rem;">⚠️ Нет трафика</span>' :
+                    item.cpc > 100 ? 
+                    '<span style="color: var(--warning); font-size: 0.75rem;">💰 Высокий CPC</span>' :
+                    '<span style="color: var(--success); font-size: 0.75rem;">✓ OK</span>';
+
+                row.innerHTML = `
+                    <td><div class="query-text" title="${item.query}">${item.query}</div></td>
+                    <td><span class="position-badge ${positionClass}">${item.position}</span></td>
+                    <td>${item.frequency || 0}</td>
+                    <td class="cpc-value ${cpcClass}">${item.cpc > 0 ? item.cpc.toFixed(2) + ' ₽' : '-'}</td>
+                    <td>
+                        <div>${item.traffic}%</div>
+                        <div class="traffic-bar">
+                            <div class="traffic-fill" style="width: ${Math.min(item.traffic * 5, 100)}%"></div>
+                        </div>
+                    </td>
+                    <td>${item.competitors}</td>
+                    <td>${statusBadge}</td>
+                `;
+                
+                row.style.animationDelay = `${index * 0.05}s`;
+                row.style.animation = 'fadeIn 0.3s ease-out';
+                tbody.appendChild(row);
+            });
+        }
+
+        // Filter table
+        function filterTable(filter) {
+            currentFilter = filter;
+            
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            let filteredData = data;
+            
+            switch(filter) {
+                case 'premium':
+                    filteredData = data.filter(item => item.position.includes('CP'));
+                    break;
+                case 'highCPC':
+                    filteredData = data.filter(item => item.cpc > 100);
+                    break;
+                case 'zeroTraffic':
+                    filteredData = data.filter(item => item.traffic === 0);
+                    break;
+                case 'competitors':
+                    filteredData = data.filter(item => 
+                        item.query.toLowerCase().includes('вентра') || 
+                        item.query.toLowerCase().includes('анкор')
+                    );
+                    break;
+            }
+            
+            renderTable(filteredData);
+        }
+
+        // Sort table
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+
+            const keys = ['query', 'position', 'frequency', 'cpc', 'traffic', 'competitors'];
+            const key = keys[column];
+
+            let filteredData = currentFilter === 'all' ? [...data] : 
+                              currentFilter === 'premium' ? data.filter(item => item.position.includes('CP')) :
+                              currentFilter === 'highCPC' ? data.filter(item => item.cpc > 100) :
+                              currentFilter === 'zeroTraffic' ? data.filter(item => item.traffic === 0) :
+                              data.filter(item => item.query.toLowerCase().includes('вентра') || item.query.toLowerCase().includes('анкор'));
+
+            filteredData.sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+                
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderTable(filteredData);
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredData = data.filter(item => 
+                item.query.toLowerCase().includes(searchTerm)
+            );
+            renderTable(filteredData);
+        });
+
+        // Export to CSV
+        function exportData() {
+            const headers = ['Запрос', 'Позиция', 'Частотность', 'CPC', 'Доля трафика', 'Конкуренты'];
+            const csvContent = [
+                headers.join(';'),
+                ...data.map(item => [
+                    item.query,
+                    item.position,
+                    item.frequency,
+                    item.cpc,
+                    item.traffic,
+                    item.competitors
+                ].join(';'))
+            ].join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'sequoia-service-analytics.csv';
+            link.click();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateStats();
+            initCharts();
+            renderTable();
+        });
+    </script>
+</body>
+</html>
